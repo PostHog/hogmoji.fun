@@ -28,8 +28,8 @@ npm run build  # production build into site/build
 
 This project is a fork/rebrand of **[bufo.fun](https://bufo.fun)** by [@tfritzy](https://github.com/tfritzy) — see the upstream repo at **https://github.com/tfritzy/bufo.fun**. Most of the builder code, layout, and UX patterns here originated there. Huge thanks.
 
-The original bufo emoji art comes from **[knobiknows/all-the-bufo](https://github.com/knobiknows/all-the-bufo)** — a community-maintained collection of bufo (frog) emoji. hogmoji.fun started from that art and is transitioning its default mascot to PostHog's hedgehog.
+The original bufo emoji art comes from **[knobiknows/all-the-bufo](https://github.com/knobiknows/all-the-bufo)** — a community-maintained collection of bufo (frog) emoji.
 
 ## License
 
-Inherits the license of the upstream `tfritzy/bufo.fun` repo.
+[MIT](./LICENSE)
