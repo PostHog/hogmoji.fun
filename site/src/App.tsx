@@ -1,17 +1,15 @@
 import { Routes, Route } from "react-router-dom";
 import { Header } from "./components/Header";
-import { HomePage } from "./pages/HomePage";
-import { BuilderListPage } from "./pages/BuilderListPage";
-import { BuilderEditorPage } from "./pages/BuilderEditorPage";
+import { TemplateListPage } from "./pages/TemplateListPage";
+import { EditorPage } from "./pages/EditorPage";
 
 export function App() {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
       <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/builder" element={<BuilderListPage />} />
-        <Route path="/builder/:id" element={<BuilderEditorPage />} />
+        <Route path="/" element={<TemplateListPage />} />
+        <Route path="/:id" element={<EditorPage />} />
       </Routes>
     </div>
   );

@@ -2,16 +2,16 @@ import { Link, useLocation } from "react-router-dom";
 
 export function Header() {
   const location = useLocation();
-  const isBuilderEditor = location.pathname.startsWith("/builder/") && location.pathname !== "/builder";
+  const isEditor = location.pathname !== "/" && location.pathname.length > 1;
 
-  if (isBuilderEditor) {
+  if (isEditor) {
     return (
       <header className="w-full bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
         <Link to="/" className="text-xl font-bold tracking-tight text-gray-800">
-          bufo.fun
+          hogmoji.fun
         </Link>
         <Link
-          to="/builder"
+          to="/"
           className="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-full transition-colors"
           title="Close"
         >
@@ -38,26 +38,14 @@ export function Header() {
       <div className="container mx-auto py-4 flex flex-col md:flex-row justify-between items-center">
         <Link to="/" className="mb-4 md:mb-0 text-center md:text-left">
           <h1 className="text-3xl font-bold tracking-tight text-gray-800">
-            bufo.fun
+            hogmoji.fun
           </h1>
-          <p className="text-gray-500 text-sm font-medium">Quite a few bufos</p>
+          <p className="text-gray-500 text-sm font-medium">Build your own PostHog hedgehog emoji</p>
         </Link>
         <div className="flex items-center space-x-6">
-          <Link
-            className="text-gray-600 hover:text-bufo-500 font-medium transition-colors"
-            to="/"
-          >
-            Home
-          </Link>
-          <Link
-            className="text-gray-600 hover:text-bufo-500 font-medium transition-colors"
-            to="/builder"
-          >
-            Builder
-          </Link>
           <a
-            className="flex items-center gap-2 text-gray-600 hover:text-bufo-500 font-medium transition-colors"
-            href="https://github.com/tfritzy/bufo.fun"
+            className="flex items-center gap-2 text-gray-600 hover:text-hog-500 font-medium transition-colors"
+            href="https://github.com/PostHog/hogmoji.fun"
             target="_blank"
             rel="noopener noreferrer"
           >

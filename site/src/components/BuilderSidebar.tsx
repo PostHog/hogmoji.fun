@@ -56,7 +56,7 @@ export function BuilderSidebar({
                 value={widthInput}
                 onChange={(e) => onWidthChange(e.target.value)}
                 onBlur={onWidthBlur}
-                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-bufo-300 outline-none transition-shadow"
+                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-hog-300 outline-none transition-shadow"
               />
             </div>
             <div className="flex-1">
@@ -68,7 +68,7 @@ export function BuilderSidebar({
                 value={heightInput}
                 onChange={(e) => onHeightChange(e.target.value)}
                 onBlur={onHeightBlur}
-                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-bufo-300 outline-none transition-shadow"
+                className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-hog-300 outline-none transition-shadow"
               />
             </div>
           </div>
@@ -77,8 +77,7 @@ export function BuilderSidebar({
           Layers
         </h3>
         <div className="space-y-2">
-          {[...layers].reverse().map((layer, reversedIdx) => {
-            const idx = layers.length - 1 - reversedIdx;
+          {layers.map((layer, idx) => ({ layer, idx })).reverse().map(({ layer, idx }) => {
             const isEditable = isUserEditableLayer(layer);
             const isEmptyEditableLayer = isEditable && !layer.imageData;
 
@@ -89,13 +88,13 @@ export function BuilderSidebar({
                   onClick={() => onLayerClick(idx)}
                   className={`flex items-center p-2 rounded-md cursor-pointer transition-colors ${
                     idx === activeLayerIndex
-                      ? "bg-bufo-100 border-2 border-dashed border-bufo-400"
-                      : "bg-gray-50 border-2 border-dashed border-gray-300 hover:border-bufo-300 hover:bg-bufo-50"
+                      ? "bg-hog-100 border-2 border-dashed border-hog-400"
+                      : "bg-gray-50 border-2 border-dashed border-gray-300 hover:border-hog-300 hover:bg-hog-50"
                   }`}
                 >
                   <div className="w-8 h-8 bg-white border border-gray-200 rounded flex items-center justify-center mr-2 overflow-hidden flex-shrink-0">
                     <svg
-                      className="w-4 h-4 text-bufo-400"
+                      className="w-4 h-4 text-hog-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -109,7 +108,7 @@ export function BuilderSidebar({
                     </svg>
                   </div>
                   <div className="flex-grow">
-                    <span className="text-sm font-medium text-bufo-600 block">
+                    <span className="text-sm font-medium text-hog-600 block">
                       Add your image
                     </span>
                     <span className="text-xs text-gray-400">
@@ -135,7 +134,7 @@ export function BuilderSidebar({
                 onClick={() => onLayerClick(idx)}
                 className={`flex items-center p-2 rounded-md cursor-pointer transition-colors ${
                   idx === activeLayerIndex
-                    ? "bg-bufo-100 border border-bufo-400"
+                    ? "bg-hog-100 border border-hog-400"
                     : "bg-gray-50 border border-transparent hover:bg-gray-100"
                 }`}
               >
@@ -204,7 +203,7 @@ export function BuilderSidebar({
       <div className="p-4 border-t border-gray-200 bg-gray-50">
         <button
           onClick={onDownload}
-          className="w-full py-3 px-4 bg-bufo-500 text-white rounded-lg font-medium hover:bg-bufo-600 transition-colors flex items-center justify-center"
+          className="w-full py-3 px-4 bg-hog-500 text-white rounded-lg font-medium hover:bg-hog-600 transition-colors flex items-center justify-center"
         >
           <svg
             className="w-5 h-5 mr-2"

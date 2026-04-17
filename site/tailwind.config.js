@@ -19,7 +19,7 @@ module.exports = {
         transparent: "transparent",
         current: "currentColor",
         white: "#ffffff",
-        bufo: {
+        hog: {
           50: "#e9f7c8",
           100: "#cee0a3",
           200: "#9ec079",

@@ -11,11 +11,11 @@ interface SEOProps {
 export function SEO({
   title,
   description,
-  keywords = "bufo, frog, emoji, discord, slack, bufo.fun, froge",
-  image = "https://bufo.fun/logo128.png",
-  url = "https://bufo.fun",
+  keywords = "hogmoji, posthog, hedgehog, emoji, slack, discord",
+  image = "https://hogmoji.fun/logo128.png",
+  url = "https://hogmoji.fun",
 }: SEOProps) {
-  const fullTitle = `${title} | bufo.fun`;
+  const fullTitle = `${title} | hogmoji.fun`;
 
   return (
     <Helmet>
