@@ -1,5 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useState, useRef, useEffect, useCallback } from "react";
+import posthog from "posthog-js";
 import {
   getTemplateById,
   TemplateLayer,
@@ -114,12 +115,13 @@ export function EditorPage() {
               loadImageWithPosition(imageData, activeLayerIndex);
             };
             reader.readAsDataURL(file);
+            posthog.capture("image_pasted", { template_id: template?.id, layer_index: activeLayerIndex });
           }
           break;
         }
       }
     },
-    [activeLayerIndex, loadImageWithPosition]
+    [activeLayerIndex, loadImageWithPosition, template?.id]
   );
 
   useEffect(() => {
@@ -161,6 +163,7 @@ export function EditorPage() {
     };
     reader.readAsDataURL(file);
     input.value = "";
+    posthog.capture("image_uploaded", { template_id: template?.id, layer_index: layerIndex });
   };
 
   const updateLayerPosition = (
@@ -384,6 +387,7 @@ export function EditorPage() {
     setPreviewUrl(preview);
     setHogName(`${template?.id || "hog"}-`);
     setShowDownloadModal(true);
+    posthog.capture("download_modal_opened", { template_id: template?.id });
   };
 
   const triggerDownload = (url: string, filename: string) => {
@@ -396,6 +400,7 @@ export function EditorPage() {
   const handleDownload = () => {
     if (!previewUrl) return;
     triggerDownload(previewUrl, `${hogName || "hog"}.png`);
+    posthog.capture("hogmoji_downloaded", { template_id: template?.id, file_name: `${hogName || "hog"}.png` });
   };
 
   const handleCopyToClipboard = async () => {
@@ -408,6 +413,7 @@ export function EditorPage() {
       ]);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      posthog.capture("hogmoji_copied", { template_id: template?.id });
     } catch (err) {
       triggerDownload(previewUrl, `${hogName || "hog"}.png`);
     }

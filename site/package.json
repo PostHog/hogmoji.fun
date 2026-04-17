@@ -6,6 +6,7 @@
     "@types/node": "^24.0.0",
     "@types/react": "^18.2.65",
     "@types/react-dom": "^18.2.22",
+    "posthog-js": "^1.369.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-helmet-async": "^2.0.5",

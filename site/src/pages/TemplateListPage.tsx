@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import posthog from "posthog-js";
 import { builderTemplates } from "../builderTemplates";
 import { SEO } from "../components/SEO";
 
@@ -28,6 +29,7 @@ export function TemplateListPage() {
                 key={template.id}
                 to={`/${template.id}`}
                 className="group block bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-200 overflow-hidden border border-gray-200 hover:border-hog-400"
+                onClick={() => posthog.capture("template_selected", { template_id: template.id, template_name: template.name })}
               >
                 <div className="aspect-square bg-gray-100 flex items-center justify-center p-4">
                   <img
