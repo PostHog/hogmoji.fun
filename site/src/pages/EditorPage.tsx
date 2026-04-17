@@ -127,30 +127,63 @@ export function EditorPage() {
     return () => document.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+
+      if (e.key === "Escape") {
+        setActiveLayerIndex(-1);
+        return;
+      }
+
+      if (e.key === "Delete" || e.key === "Backspace") {
+        const layer = layers[activeLayerIndex];
+        if (layer && !layer.file && layer.imageData) {
+          clearLayerImage(activeLayerIndex);
+        }
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [layers, activeLayerIndex]);
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>, targetLayerIndex?: number) => {
-    const file = e.target.files?.[0];
+    const input = e.target;
+    const file = input.files?.[0];
     if (!file) return;
 
-    const layerIndex = targetLayerIndex !== undefined ? targetLayerIndex : activeLayerIndex;
+    const layerIndex = targetLayerIndex ?? activeLayerIndex;
     const reader = new FileReader();
     reader.onload = (event) => {
       const imageData = event.target?.result as string;
       loadImageWithPosition(imageData, layerIndex);
     };
     reader.readAsDataURL(file);
+    input.value = "";
   };
 
   const updateLayerPosition = (
     index: number,
     updates: Partial<LayerPosition>
   ) => {
-    setLayers((prev) =>
-      prev.map((layer, idx) =>
-        idx === index
-          ? { ...layer, position: { ...layer.position, ...updates } }
-          : layer
-      )
-    );
+    setLayers((prev) => {
+      const layer = prev[index];
+      if (!layer) return prev;
+      const next = { ...layer.position, ...updates };
+      const current = layer.position;
+      if (
+        next.x === current.x &&
+        next.y === current.y &&
+        next.width === current.width &&
+        next.height === current.height
+      ) {
+        return prev;
+      }
+      return prev.map((l, idx) =>
+        idx === index ? { ...l, position: next } : l
+      );
+    });
   };
 
   const clearLayerImage = (index: number) => {
@@ -304,10 +337,6 @@ export function EditorPage() {
     setHeightInput(String(validated));
   };
 
-  const handleDownloadClick = () => {
-    openDownloadModal();
-  };
-
   const generatePreview = async (): Promise<string | null> => {
     const canvas = exportCanvasRef.current;
     if (!canvas) return null;
@@ -421,7 +450,7 @@ export function EditorPage() {
           onFileUpload={handleFileUpload}
           onClearLayerImage={clearLayerImage}
           isUserEditableLayer={isUserEditableLayer}
-          onDownload={handleDownloadClick}
+          onDownload={openDownloadModal}
         />
 
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 md:hidden flex gap-3" role="group" aria-label="Layer selection and actions">
@@ -535,7 +564,7 @@ export function EditorPage() {
             );
           })}
           <button
-            onClick={handleDownloadClick}
+            onClick={openDownloadModal}
             className="w-14 h-14 rounded-lg shadow-lg bg-hog-500 hover:bg-hog-600 text-white flex items-center justify-center transition-all"
             aria-label="Download"
           >
