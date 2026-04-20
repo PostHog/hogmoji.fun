@@ -8,6 +8,7 @@ import {
 } from "../builderTemplates";
 import { SEO } from "../components/SEO";
 import { BuilderSidebar } from "../components/BuilderSidebar";
+import { buildAnimatedGif, findGifLayerIndex } from "../gifExport";
 
 interface LayerState extends TemplateLayer {
   imageData: string | null;
@@ -34,6 +35,8 @@ export function EditorPage() {
   const [showDownloadModal, setShowDownloadModal] = useState(false);
   const [hogName, setHogName] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewIsGif, setPreviewIsGif] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [canvasWidth, setCanvasWidth] = useState<number>(500);
   const [canvasHeight, setCanvasHeight] = useState<number>(500);
@@ -340,10 +343,30 @@ export function EditorPage() {
     setHeightInput(String(validated));
   };
 
-  const generatePreview = async (): Promise<string | null> => {
+  const buildExportLayers = () =>
+    layers.map((layer) => ({
+      src: layer.imageData || layer.file || null,
+      position: layer.position,
+      visible: layer.visible,
+    }));
+
+  const generatePreview = async (): Promise<{ url: string; isGif: boolean } | null> => {
+    const exportLayers = buildExportLayers();
+    const gifIndex = findGifLayerIndex(exportLayers);
+
+    if (gifIndex !== -1) {
+      const blob = await buildAnimatedGif({
+        layers: exportLayers,
+        gifLayerIndex: gifIndex,
+        canvasWidth,
+        canvasHeight,
+        workerScript: `${process.env.PUBLIC_URL || ""}/gif.worker.js`,
+      });
+      return { url: URL.createObjectURL(blob), isGif: true };
+    }
+
     const canvas = exportCanvasRef.current;
     if (!canvas) return null;
-
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
 
@@ -351,9 +374,9 @@ export function EditorPage() {
     canvas.height = canvasHeight;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const drawable = layers
-      .map((layer) => ({ layer, src: layer.imageData || layer.file }))
-      .filter(({ layer, src }) => layer.visible && src);
+    const drawable = exportLayers.filter(
+      (layer): layer is typeof layer & { src: string } => layer.visible && !!layer.src
+    );
 
     const images = await Promise.all(
       drawable.map(({ src }) =>
@@ -362,12 +385,12 @@ export function EditorPage() {
           img.crossOrigin = "anonymous";
           img.onload = () => resolve(img);
           img.onerror = () => resolve(null);
-          img.src = src as string;
+          img.src = src;
         })
       )
     );
 
-    drawable.forEach(({ layer }, i) => {
+    drawable.forEach((layer, i) => {
       const img = images[i];
       if (!img) return;
       ctx.drawImage(
@@ -379,15 +402,22 @@ export function EditorPage() {
       );
     });
 
-    return canvas.toDataURL("image/png");
+    return { url: canvas.toDataURL("image/png"), isGif: false };
   };
 
   const openDownloadModal = async () => {
-    const preview = await generatePreview();
-    setPreviewUrl(preview);
-    setHogName(`${template?.id || "hog"}-`);
+    if (previewUrl && previewIsGif) URL.revokeObjectURL(previewUrl);
+    setIsExporting(true);
     setShowDownloadModal(true);
+    setHogName(`${template?.id || "hog"}-`);
     posthog.capture("download_modal_opened", { template_id: template?.id });
+    try {
+      const result = await generatePreview();
+      setPreviewUrl(result?.url ?? null);
+      setPreviewIsGif(result?.isGif ?? false);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const triggerDownload = (url: string, filename: string) => {
@@ -397,25 +427,27 @@ export function EditorPage() {
     link.click();
   };
 
+  const exportExtension = () => (previewIsGif ? "gif" : "png");
+
   const handleDownload = () => {
     if (!previewUrl) return;
-    triggerDownload(previewUrl, `${hogName || "hog"}.png`);
-    posthog.capture("hogmoji_downloaded", { template_id: template?.id, file_name: `${hogName || "hog"}.png` });
+    const filename = `${hogName || "hog"}.${exportExtension()}`;
+    triggerDownload(previewUrl, filename);
+    posthog.capture("hogmoji_downloaded", { template_id: template?.id, file_name: filename });
   };
 
   const handleCopyToClipboard = async () => {
     if (!previewUrl) return;
+    const mime = previewIsGif ? "image/gif" : "image/png";
     try {
       const response = await fetch(previewUrl);
       const blob = await response.blob();
-      await navigator.clipboard.write([
-        new ClipboardItem({ "image/png": blob }),
-      ]);
+      await navigator.clipboard.write([new ClipboardItem({ [mime]: blob })]);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
       posthog.capture("hogmoji_copied", { template_id: template?.id });
     } catch (err) {
-      triggerDownload(previewUrl, `${hogName || "hog"}.png`);
+      triggerDownload(previewUrl, `${hogName || "hog"}.${exportExtension()}`);
     }
   };
 
@@ -703,14 +735,19 @@ export function EditorPage() {
               </button>
             </div>
             <div className="p-4">
-              {previewUrl && (
-                <div className="mb-4 bg-gray-100 rounded-lg p-4 flex items-center justify-center">
+              <div className="mb-4 bg-gray-100 rounded-lg p-4 flex items-center justify-center min-h-[128px]">
+                {isExporting ? (
+                  <span className="text-sm text-gray-500">Rendering…</span>
+                ) : previewUrl ? (
                   <img
                     src={previewUrl}
                     alt="Preview"
                     className="max-w-full max-h-48 object-contain"
                   />
-                </div>
+                ) : null}
+              </div>
+              {previewIsGif && !isExporting && (
+                <p className="mb-3 text-xs text-gray-500">Exporting as animated GIF</p>
               )}
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -727,7 +764,8 @@ export function EditorPage() {
               <div className="flex gap-3">
                 <button
                   onClick={handleDownload}
-                  className="flex-1 py-2 px-4 bg-hog-500 text-white rounded-lg font-medium hover:bg-hog-600 transition-colors flex items-center justify-center"
+                  disabled={isExporting || !previewUrl}
+                  className="flex-1 py-2 px-4 bg-hog-500 text-white rounded-lg font-medium hover:bg-hog-600 transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -736,7 +774,8 @@ export function EditorPage() {
                 </button>
                 <button
                   onClick={handleCopyToClipboard}
-                  className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center ${
+                  disabled={isExporting || !previewUrl}
+                  className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed ${
                     copied
                       ? "bg-hog-100 text-hog-700"
                       : "bg-gray-100 text-gray-700 hover:bg-gray-200"
